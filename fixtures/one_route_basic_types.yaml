@@ -1,0 +1,40 @@
+openapi: 3.1.0
+info:
+  title: Widget Service
+  version: 0.0.0
+tags:
+  - name: Widgets
+paths:
+  /widgets:
+    get:
+      operationId: Widgets_widget
+      description: List widgets
+      parameters: []
+      responses:
+        '200':
+          description: The request has succeeded.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SimpleWidget'
+      tags:
+        - Widgets
+components:
+  schemas:
+    SimpleWidget:
+      type: object
+      required:
+        - id
+        - weight
+        - color
+      properties:
+        id:
+          type: string
+        weight:
+          type: integer
+          format: int32
+        color:
+          type: string
+          enum:
+            - red
+            - blue
