@@ -1,0 +1,5 @@
+---
+source: crates/oapigen/src/templates/structs.rs
+expression: got
+---
+"struct User {\n            name: String,\n            lastname: String,\n}"

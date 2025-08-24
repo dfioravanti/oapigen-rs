@@ -1,0 +1,7 @@
+struct {{struct_name}} {
+    {{#each fields}}
+        {{#with this}}
+            {{field_name}}: {{field_type}},
+        {{/with}}
+    {{/each}}
+}
