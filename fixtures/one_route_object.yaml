@@ -7,7 +7,7 @@ tags:
 paths:
   /widgets:
     get:
-      operationId: Widgets_widget
+      operationId: Widgets_object
       description: List widgets
       parameters: []
       responses:
@@ -16,12 +16,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SimpleWidget'
+                $ref: '#/components/schemas/Object'
       tags:
         - Widgets
 components:
   schemas:
-    SimpleWidget:
+    Object:
       type: object
       required:
         - id
@@ -35,6 +35,3 @@ components:
           format: int32
         color:
           type: string
-          enum:
-            - red
-            - blue

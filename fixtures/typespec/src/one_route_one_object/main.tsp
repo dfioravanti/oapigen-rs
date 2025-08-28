@@ -12,5 +12,5 @@ namespace DemoService;
 @tag("Widgets")
 interface Widgets {
   /** List widgets */
-  @get widget(): SimpleWidget;
+  @get object(): Object;
 }

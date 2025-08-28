@@ -1,0 +1,23 @@
+openapi: 3.1.0
+info:
+  title: Widget Service
+  version: 0.0.0
+tags:
+  - name: Widgets
+paths:
+  /widgets:
+    get:
+      operationId: Widgets_object
+      description: List widgets
+      parameters: []
+      responses:
+        "200":
+          description: The request has succeeded.
+          content:
+            text/plain:
+              schema:
+                type: integer
+                format: int32
+      tags:
+        - Widgets
+components: {}
