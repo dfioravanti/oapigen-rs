@@ -1,26 +1,28 @@
-use crate::parsing::format::type_for_format_string;
+use crate::{models, parsing::schema_format};
 use log::warn;
 use oas3::spec::{ObjectSchema, Schema, SchemaType, SchemaTypeSet};
 use proc_macro2::TokenStream;
 use quote::{ToTokens, quote};
 
-pub fn tokenize_schema2(schema_name: String, schema: ObjectSchema) -> TokenStream {
-    match &schema.schema_type {
+pub fn tokenize_schema(schema_name: String, schema: ObjectSchema) -> TokenStream {
+    let tokenized_schema = match &schema.schema_type {
         Some(schema_typeset) => match schema_typeset {
             SchemaTypeSet::Single(schema_type) => {
-                tokenize_schema_type(schema_name, &schema, schema_type)
+                tokenize_flat_schema(schema_name, &schema, schema_type)
             }
             SchemaTypeSet::Multiple(items) => todo!(),
         },
         None => todo!(),
-    }
+    };
+
+    tokenized_schema.to_token_stream()
 }
 
-fn tokenize_schema_type(
+fn tokenize_flat_schema(
     schema_name: String,
     schema: &ObjectSchema,
     schema_type: &SchemaType,
-) -> TokenStream {
+) -> models::TokenizedSchema {
     match schema_type {
         SchemaType::Boolean => todo!(),
         SchemaType::Integer => tokenize_integer_schema(schema_name, schema),
@@ -32,63 +34,57 @@ fn tokenize_schema_type(
     }
 }
 
-/// [https://spec.openapis.org/registry/format/]
-fn tokenize_integer_schema(schema_name: String, schema: &ObjectSchema) -> TokenStream {
+fn tokenize_integer_schema(schema_name: String, schema: &ObjectSchema) -> models::TokenizedSchema {
     // if one injects schema_name directly into quote it gets tokenized together with "",
     // which we do not want. Doing it like this drops the ""
     let tokenized_name: TokenStream = schema_name.parse().unwrap();
 
-    let tokenized_type = match &schema.format {
-        Some(format) => todo!(),
-        None => quote! { i64 },
+    let (tokenized_type, imports) = match &schema.format {
+        Some(format) => schema_format::formatted_number(format),
+        None => schema_format::formatted_number("integer"),
     };
 
-    quote! {
-        #tokenized_name : #tokenized_type
+    models::TokenizedSchema {
+        tokenized_name,
+        tokenized_type,
+        imports,
+        current_type: models::CurrentType::Type,
     }
 }
 
-fn tokenize_number_schema(schema_name: String, schema: &ObjectSchema) -> TokenStream {
+fn tokenize_number_schema(schema_name: String, schema: &ObjectSchema) -> models::TokenizedSchema {
     // if one injects schema_name directly into quote it gets tokenized together with "",
     // which we do not want. Doing it like this drops the ""
     let tokenized_name: TokenStream = schema_name.parse().unwrap();
 
-    let tokenized_type = match &schema.format {
-        Some(format) => todo!(),
-        None => quote! { float },
+    let (tokenized_type, imports) = match &schema.format {
+        Some(format) => schema_format::formatted_number(format),
+        None => schema_format::default_number(),
     };
 
-    quote! {
-        #tokenized_name : #tokenized_type
+    models::TokenizedSchema {
+        tokenized_name,
+        tokenized_type,
+        imports,
+        current_type: models::CurrentType::Type,
     }
 }
 
-fn tokenize_string_schema(schema_name: String, schema: &ObjectSchema) -> TokenStream {
+fn tokenize_string_schema(schema_name: String, schema: &ObjectSchema) -> models::TokenizedSchema {
     // if one injects schema_name directly into quote it gets tokenized together with "",
     // which we do not want. Doing it like this drops the ""
     let tokenized_name: TokenStream = schema_name.parse().unwrap();
 
-    let tokenized_type = match &schema.format {
-        Some(format) => type_for_format_string(format),
-        None => quote! { String },
+    let (tokenized_type, imports) = match &schema.format {
+        Some(format) => schema_format::formatted_string(format),
+        None => schema_format::default_string(),
     };
 
-    quote! {
-        #tokenized_name : #tokenized_type
-    }
-}
-
-// This module deals with parsing of the various formats supported by this library.
-// The list of supported formats is a subset of
-// [https://spec.openapis.org/registry/format/]
-pub fn parse_format(schema_type: SchemaType, format: String) -> TokenStream {
-    match format {
-        _ => todo!(), // _ => {
-                      //     warn!(
-                      //         "unknown format {:} for type {:?}, using the default for {:?}",
-                      //         format, schema_type, schema_type
-                      //     );
-                      // }
+    models::TokenizedSchema {
+        tokenized_name,
+        tokenized_type,
+        imports,
+        current_type: models::CurrentType::Type,
     }
 }
 
@@ -98,13 +94,13 @@ mod tests {
 
     use super::*;
 
-    #[test_case("age", "type: integer", "age : i64"; "integer")]
-    #[test_case("age", "type: number", "age : float"; "number")]
+    #[test_case("age", "type: integer", "age : i32"; "integer")]
+    #[test_case("age", "type: number", "age : f32"; "number")]
     #[test_case("age", "type: string", "age : String"; "string")]
     fn test_parse_base_cases(schema_name: &str, schema_spec: &str, expected: &str) {
         let schema = serde_yaml::from_str::<ObjectSchema>(schema_spec).unwrap();
 
-        let got = tokenize_schema2(schema_name.to_string(), schema);
+        let got = tokenize_schema(schema_name.to_string(), schema);
 
         assert_eq!(got.to_string(), expected.to_string());
     }

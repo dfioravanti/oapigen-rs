@@ -2,4 +2,4 @@
 source: src/models/structs.rs
 expression: formatted_parsed_schema
 ---
-"use chrono :: DateTime DateTime"
+"imports => [\"use chrono :: DateTime\"] \n schema => \"time : DateTime\""

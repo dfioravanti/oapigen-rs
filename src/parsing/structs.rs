@@ -3,9 +3,7 @@ use oas3::spec::SchemaTypeSet;
 
 use crate::models;
 
-fn parse_structs(spec: oas3::Spec) -> Result<Vec<models::Struct>> {
-    let mut structs = Vec::new();
-
+fn parse_structs(spec: oas3::Spec) -> Result<()> {
     let components = spec
         .clone()
         .components
@@ -30,7 +28,7 @@ fn parse_structs(spec: oas3::Spec) -> Result<Vec<models::Struct>> {
         continue;
     }
 
-    Ok(structs)
+    Ok(())
 }
 
 #[cfg(test)]
