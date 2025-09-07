@@ -1,16 +1,17 @@
 use crate::{models, parsing::schema_format};
-use log::warn;
-use oas3::spec::{ObjectSchema, Schema, SchemaType, SchemaTypeSet};
+use oas3::spec::{ObjectSchema, SchemaType, SchemaTypeSet};
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::ToTokens;
 
 pub fn tokenize_schema(schema_name: String, schema: ObjectSchema) -> TokenStream {
+    if schema.const_value.is_some() {}
+
     let tokenized_schema = match &schema.schema_type {
         Some(schema_typeset) => match schema_typeset {
             SchemaTypeSet::Single(schema_type) => {
                 tokenize_flat_schema(schema_name, &schema, schema_type)
             }
-            SchemaTypeSet::Multiple(items) => todo!(),
+            SchemaTypeSet::Multiple(_items) => todo!(),
         },
         None => todo!(),
     };
@@ -90,18 +91,53 @@ fn tokenize_string_schema(schema_name: String, schema: &ObjectSchema) -> models:
 
 #[cfg(test)]
 mod tests {
-    use test_case::test_case;
-
     use super::*;
 
-    #[test_case("age", "type: integer", "age : i32"; "integer")]
-    #[test_case("age", "type: number", "age : f32"; "number")]
-    #[test_case("age", "type: string", "age : String"; "string")]
-    fn test_parse_base_cases(schema_name: &str, schema_spec: &str, expected: &str) {
+    use crate::parsing::fixtures;
+    use indoc::indoc;
+    use rstest::rstest;
+
+    #[rstest]
+    #[case("integer", "Age", "type: integer", "type Age = i32 ;")]
+    #[case("number", "Height", "type: number", "type Height = f32 ;")]
+    #[case("string", "Name", "type: string", "type Name = String ;")]
+    fn test_parse_base_cases(
+        #[case] name: &str,
+        #[case] schema_name: &str,
+        #[case] schema_spec: &str,
+        #[case] expected: &str,
+    ) {
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_suffix(name);
+
         let schema = serde_yaml::from_str::<ObjectSchema>(schema_spec).unwrap();
 
         let got = tokenize_schema(schema_name.to_string(), schema);
 
+        settings.bind(|| {
+            insta::assert_yaml_snapshot!(got.to_string());
+        });
+        assert_eq!(got.to_string(), expected.to_string());
+    }
+
+    #[rstest]
+    #[case("integer", "Age", "const: 3", "type Age = i32 ;")]
+    fn test_parse_constants(
+        #[case] name: &str,
+        #[case] schema_name: &str,
+        #[case] schema_spec: &str,
+        #[case] expected: &str,
+    ) {
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_suffix(name);
+
+        let schema = serde_yaml::from_str::<ObjectSchema>(schema_spec).unwrap();
+
+        let got = tokenize_schema(schema_name.to_string(), schema);
+
+        settings.bind(|| {
+            insta::assert_yaml_snapshot!(got.to_string());
+        });
         assert_eq!(got.to_string(), expected.to_string());
     }
 }

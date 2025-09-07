@@ -1,0 +1,5 @@
+---
+source: crates/zst_constants/tests/integration_tests.rs
+expression: json_output
+---
+"{\n  \"api_version\": 2,\n  \"data\": \"some important data\"\n}"

@@ -1,0 +1,19 @@
+[package]
+name = "zst_constants"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+quote = { workspace = true }
+syn = { workspace = true, features = ["parsing"] }
+serde_json = { workspace = true, features = ["default"] }
+proc-macro2 = { workspace = true }
+darling = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true, features = ["json"] }
+serde = { workspace = true, features = ["derive"] }
+rstest = { workspace = true }
+
+[lib]
+proc-macro = true

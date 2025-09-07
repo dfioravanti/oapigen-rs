@@ -1,0 +1,5 @@
+---
+source: tests/integration_tests.rs
+expression: json_output
+---
+"{\n  \"payment_method\": {\n    \"currency\": \"EUR\",\n    \"type\": \"cash\"\n  },\n  \"amount\": 42.5\n}"

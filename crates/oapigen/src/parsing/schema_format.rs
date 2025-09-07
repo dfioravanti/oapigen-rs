@@ -46,7 +46,7 @@ pub fn default_number() -> (TokenStream, models::Imports) {
 /// The list of supported formats is a subset of the registry.
 pub fn formatted_number(type_format: &str) -> (TokenStream, models::Imports) {
     let tokenized_type: TokenStream;
-    let mut imports = HashMap::new();
+    let imports = HashMap::new();
 
     match type_format {
         "int64" => tokenized_type = quote! { i64 },

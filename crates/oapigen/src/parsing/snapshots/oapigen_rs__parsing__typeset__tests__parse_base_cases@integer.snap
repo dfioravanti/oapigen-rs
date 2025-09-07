@@ -1,0 +1,5 @@
+---
+source: src/parsing/typeset.rs
+expression: got.to_string()
+---
+type Age = i32 ;

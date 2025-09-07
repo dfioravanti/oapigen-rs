@@ -1,8 +1,6 @@
 use anyhow::{Context, Result};
 use oas3::spec::SchemaTypeSet;
 
-use crate::models;
-
 fn parse_structs(spec: oas3::Spec) -> Result<()> {
     let components = spec
         .clone()
@@ -20,7 +18,7 @@ fn parse_structs(spec: oas3::Spec) -> Result<()> {
         match resolved_schema.schema_type {
             Some(t) => match t {
                 SchemaTypeSet::Single(i) => a = format!("{:?}", i),
-                SchemaTypeSet::Multiple(items) => a = "multiple".to_string(),
+                SchemaTypeSet::Multiple(_) => a = "multiple".to_string(),
             },
             None => todo!(),
         };

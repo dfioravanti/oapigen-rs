@@ -1,0 +1,5 @@
+---
+source: src/models/schema.rs
+expression: formatted_parsed_schema
+---
+"imports => [\"use chrono :: DateTime\"] \n schema => \"type time = DateTime ;\""

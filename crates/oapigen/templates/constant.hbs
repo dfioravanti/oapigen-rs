@@ -1,0 +1,32 @@
+#[derive(Debug)]
+struct {{struct_name}};
+
+impl Serialize for {{struct_name}} {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: Serializer,
+    {   
+        {{#if string_valid_value}}
+        serializer.serialize_str({{string_valid_value}})
+        {{/if}}
+    }
+}
+
+impl<'de> Deserialize<'de> for ApiVersionV2 {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: Deserializer<'de>,
+    {
+        let incoming = String::deserialize(deserializer)?;
+
+        // The core validation logic
+        if incoming == {{string_valid_value}} {
+            Ok(ApiVersionV2)
+        } else {
+            Err(de::Error::custom(format!(
+                "expected string \"v2\", found \"{}\"",
+                incoming
+            )))
+        }
+    }
+}

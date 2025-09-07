@@ -1,6 +1,5 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, TokenStreamExt, quote};
-use serde::{Deserialize, Serialize};
+use quote::{ToTokens, quote};
 use std::{collections::HashMap, fmt};
 
 /// Collects all the imports that were already added to the code.
@@ -33,6 +32,11 @@ pub struct TokenizedSchema {
     pub current_type: CurrentType,
 }
 
+pub struct TokenizedValue {
+    pub tokenized_name: Option<TokenStream>,
+    pub tokenized_value: Option<TokenStream>,
+}
+
 impl fmt::Display for TokenizedSchema {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let imports = self
@@ -52,16 +56,26 @@ impl fmt::Display for TokenizedSchema {
 
 impl quote::ToTokens for TokenizedSchema {
     fn to_tokens(&self, tokens: &mut TokenStream) {
-        let tokenized_name = &self.tokenized_name;
-        let tokenized_type = &self.tokenized_type;
-
-        let generated_tokens = quote! {
-
-            #tokenized_name: #tokenized_type
-
+        let generated_tokens = match self.current_type {
+            CurrentType::Type => tokenize_type(self),
+            CurrentType::Const => todo!(),
+            CurrentType::Enum => todo!(),
+            CurrentType::Vec => todo!(),
+            CurrentType::Struct => todo!(),
         };
 
         tokens.clone_from(&generated_tokens);
+    }
+}
+
+fn tokenize_type(tokenized_schema: &TokenizedSchema) -> TokenStream {
+    let tokenized_name = &tokenized_schema.tokenized_name;
+    let tokenized_type = &tokenized_schema.tokenized_type;
+
+    quote! {
+
+        type #tokenized_name = #tokenized_type;
+
     }
 }
 
@@ -87,6 +101,7 @@ mod tests {
             tokenized_name: quote! { time },
             tokenized_type: tokenized_schema,
             imports,
+            current_type: CurrentType::Type,
         };
 
         let formatted_parsed_schema = format!("{}", parsed_schema);
