@@ -1,13 +1,13 @@
 openapi: 3.1.0
 info:
-  title: Widget Service
+  title: Test Service
   version: 0.0.0
 tags:
-  - name: Widgets
+  - name: date
 paths:
-  /widgets:
+  /date:
     get:
-      operationId: Widgets_object
+      operationId: Date_date
       description: List widgets
       parameters: []
       responses:
@@ -16,8 +16,8 @@ paths:
           content:
             text/plain:
               schema:
-                type: integer
-                format: int32
+                type: string
+                format: date-time
       tags:
-        - Widgets
+        - date
 components: {}

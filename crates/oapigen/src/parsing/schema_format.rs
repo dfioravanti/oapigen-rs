@@ -44,7 +44,7 @@ pub fn default_number() -> (TokenStream, models::Imports) {
 /// [https://spec.openapis.org/registry/format/].
 ///
 /// The list of supported formats is a subset of the registry.
-pub fn formatted_number(type_format: &str) -> (TokenStream, models::Imports) {
+pub(crate) fn formatted_number(type_format: &str) -> (TokenStream, models::Imports) {
     let tokenized_type: TokenStream;
     let imports = HashMap::new();
 

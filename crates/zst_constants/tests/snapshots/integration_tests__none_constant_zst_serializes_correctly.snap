@@ -1,0 +1,5 @@
+---
+source: crates/zst_constants/tests/integration_tests.rs
+expression: json_output
+---
+"{\n  \"none_value\": null,\n  \"data\": \"some important data\"\n}"

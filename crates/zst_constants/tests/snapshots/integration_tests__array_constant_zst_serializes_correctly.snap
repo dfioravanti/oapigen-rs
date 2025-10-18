@@ -1,0 +1,5 @@
+---
+source: crates/zst_constants/tests/integration_tests.rs
+expression: json_output
+---
+"{\n  \"data\": [\n    1,\n    2,\n    3\n  ],\n  \"more_data\": \"some important data\"\n}"

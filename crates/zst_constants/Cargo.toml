@@ -1,12 +1,16 @@
 [package]
 name = "zst_constants"
 version = "0.1.0"
-edition = "2024"
+
+repository = { workspace = true }
+license = { workspace = true }
+edition = { workspace = true }
+rust-version = { workspace = true }
 
 [dependencies]
 quote = { workspace = true }
 syn = { workspace = true, features = ["parsing"] }
-serde_json = { workspace = true, features = ["default"] }
+serde_json = { workspace = true }
 proc-macro2 = { workspace = true }
 darling = { workspace = true }
 
@@ -14,6 +18,13 @@ darling = { workspace = true }
 insta = { workspace = true, features = ["json"] }
 serde = { workspace = true, features = ["derive"] }
 rstest = { workspace = true }
+brunch = { workspace = true }
 
 [lib]
 proc-macro = true
+# cargo test really wants to pick up the code in the documentation and it crashes
+doctest = false
+
+[[bench]]
+name = "arrays"
+harness = false

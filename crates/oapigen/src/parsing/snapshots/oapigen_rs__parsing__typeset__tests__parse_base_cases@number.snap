@@ -1,5 +1,0 @@
----
-source: src/parsing/typeset.rs
-expression: got.to_string()
----
-type Height = f32 ;

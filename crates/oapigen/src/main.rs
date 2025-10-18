@@ -1,8 +1,4 @@
-mod models;
-mod parsing;
-
-use serde::{Deserialize, Deserializer, Serialize, Serializer, de};
-use serde_json::json;
+use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
 
 #[derive(Debug)]
 struct ApiVersionV2;

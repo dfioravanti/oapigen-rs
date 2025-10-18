@@ -1,5 +1,6 @@
 use proc_macro2::TokenStream;
-use quote::{ToTokens, quote};
+use quote::{quote, ToTokens};
+use std::hash::Hash;
 use std::{collections::HashMap, fmt};
 
 /// Collects all the imports that were already added to the code.
@@ -18,10 +19,10 @@ pub enum CurrentType {
     Struct,
 }
 
-/// TokenizedType represents a rust type that was inferred from a OpenAPI specification.
+/// SchemaAsRust represents a rust type that was inferred from a OpenAPI specification.
 /// It contains all the information needed to render the type correctly.
 #[derive(Debug)]
-pub struct TokenizedSchema {
+pub struct SchemaAsRust {
     /// The name of the field as a TokenStream
     pub tokenized_name: TokenStream,
     /// The type represented as a TokenStream
@@ -31,30 +32,38 @@ pub struct TokenizedSchema {
 
     pub current_type: CurrentType,
 }
-
-pub struct TokenizedValue {
-    pub tokenized_name: Option<TokenStream>,
-    pub tokenized_value: Option<TokenStream>,
+impl Eq for SchemaAsRust {}
+impl PartialEq for SchemaAsRust {
+    fn eq(&self, other: &Self) -> bool {
+        self.to_token_stream().to_string() == other.to_token_stream().to_string()
+    }
 }
 
-impl fmt::Display for TokenizedSchema {
+impl Hash for SchemaAsRust {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.to_token_stream().to_string().hash(state);
+    }
+}
+
+impl fmt::Display for SchemaAsRust {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let imports = self
             .imports
             .iter()
-            .map(|(_, v)| v.to_string())
-            .collect::<Vec<_>>();
+            .fold(TokenStream::new(), |mut acc, (_, v)| {
+                acc.extend(v.clone());
+                acc
+            });
 
-        write!(
-            f,
-            "imports => {:?} \n schema => {:?}",
-            imports,
-            self.to_token_stream().to_string()
-        )
+        if imports.is_empty() {
+            write!(f, "{}", self.to_token_stream())
+        } else {
+            write!(f, "{} \n {}", imports, self.to_token_stream())
+        }
     }
 }
 
-impl quote::ToTokens for TokenizedSchema {
+impl ToTokens for SchemaAsRust {
     fn to_tokens(&self, tokens: &mut TokenStream) {
         let generated_tokens = match self.current_type {
             CurrentType::Type => tokenize_type(self),
@@ -65,18 +74,18 @@ impl quote::ToTokens for TokenizedSchema {
         };
 
         tokens.clone_from(&generated_tokens);
+
+        let a = tokens.to_string();
+        let _ = a;
+        print!("{:}", a);
     }
 }
 
-fn tokenize_type(tokenized_schema: &TokenizedSchema) -> TokenStream {
+fn tokenize_type(tokenized_schema: &SchemaAsRust) -> TokenStream {
     let tokenized_name = &tokenized_schema.tokenized_name;
     let tokenized_type = &tokenized_schema.tokenized_type;
 
-    quote! {
-
-        type #tokenized_name = #tokenized_type;
-
-    }
+    quote! { type #tokenized_name = #tokenized_type; }
 }
 
 #[cfg(test)]
@@ -94,10 +103,10 @@ mod tests {
         let mut imports = HashMap::new();
         imports.insert(
             "chrono::DateTime".to_string(),
-            quote! { use chrono::DateTime },
+            quote! { use chrono::DateTime; },
         );
 
-        let parsed_schema = TokenizedSchema {
+        let parsed_schema = SchemaAsRust {
             tokenized_name: quote! { time },
             tokenized_type: tokenized_schema,
             imports,

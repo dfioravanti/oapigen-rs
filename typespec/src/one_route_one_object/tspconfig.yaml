@@ -2,7 +2,7 @@ emit:
   - "@typespec/openapi3"
 options:
   "@typespec/openapi3":
-    emitter-output-dir: "{cwd}/fixtures"
+    emitter-output-dir: "{cwd}/crates/oapigen/fixtures"
     output-file: one_route_object.yaml
     openapi-versions:
       - 3.1.0

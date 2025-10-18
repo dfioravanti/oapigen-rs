@@ -3,7 +3,7 @@ use serde_json::Value;
 
 use crate::models;
 
-fn parse_constants(schema_name: String, schema: ObjectSchema) -> models::TokenizedSchema {
+fn parse_constants(schema_name: String, schema: ObjectSchema) -> models::SchemaAsRust {
     match schema.const_value.unwrap() {
         Value::Null => todo!(),
         Value::Bool(v) => todo!(),
@@ -20,16 +20,4 @@ fn parse_value(original_value: Value) {
     stack.push(original_value);
 
     while let Some(value) = stack.pop() {}
-}
-
-#[cfg(test)]
-mod test {
-    use rstest::rstest;
-
-    #[rstest]
-    #[case(
-        "string",
-        "{{\"country\": {{\"const\": \"United States of America\"}}}}\""
-    )]
-    fn test_parse_base_cases() {}
 }

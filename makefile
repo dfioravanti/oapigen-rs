@@ -1,4 +1,4 @@
-TSP_DIRS := $(shell find fixtures/typespec/src -type f -name "main.tsp" -exec dirname {} \;)
+TSP_DIRS := $(shell find typespec/src -type f -name "main.tsp" -exec dirname {} \;)
 
 compile-all: format-specs
 	@echo "Starting compilation for all main.tsp files..."
@@ -14,6 +14,6 @@ compile-all: format-specs
 	@echo "All compilations are complete."
 
 format-specs:
-	cd fixtures/typespec && \
+	cd typespec && \
 	npx tsp format src/*.tsp && \
  	npx tsp format src/**/*.tsp 

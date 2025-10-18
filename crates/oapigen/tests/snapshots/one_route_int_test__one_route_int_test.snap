@@ -1,0 +1,5 @@
+---
+source: crates/oapigen/tests/one_route_int_test.rs
+expression: got.to_string()
+---
+type ListWidgetsResponse200 = i32 ;

@@ -1,0 +1,5 @@
+---
+source: crates/oapigen/src/parsing/specs.rs
+expression: got_as_strings
+---
+- type ListWidgetsResponse200 = i32 ;
