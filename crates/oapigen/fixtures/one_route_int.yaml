@@ -7,9 +7,9 @@ tags:
 paths:
   /widgets:
     get:
-      operationId: Widgets_object
+      operationId: ListAllWidgets
       description: List widgets
-      parameters: []
+      parameters: [ ]
       responses:
         '200':
           description: The request has succeeded.
@@ -20,4 +20,4 @@ paths:
                 format: int32
       tags:
         - Widgets
-components: {}
+components: { }

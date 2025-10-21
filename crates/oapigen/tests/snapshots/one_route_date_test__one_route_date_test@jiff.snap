@@ -1,6 +1,6 @@
 ---
 source: crates/oapigen/tests/one_route_date_test.rs
-assertion_line: 14
 expression: got.to_string()
 ---
-type DateDateResponse200 = String ;
+use jiff::Timestamp;
+struct DateDateResponse200(Timestamp);

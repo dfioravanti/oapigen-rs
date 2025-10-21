@@ -1,0 +1,6 @@
+---
+source: crates/oapigen/tests/one_route_date_test.rs
+expression: got.to_string()
+---
+use chrono::{DateTime, Utc};
+struct DateDateResponse200(DateTime<Utc>);

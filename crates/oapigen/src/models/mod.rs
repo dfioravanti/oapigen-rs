@@ -1,5 +1,5 @@
-pub mod intermediate_representation;
+mod config;
 pub mod schema;
 
-pub use intermediate_representation::*;
+pub use config::*;
 pub use schema::*;

@@ -14,10 +14,9 @@ prettyplease = { version = "0.2" }
 serde_json = { version = "1.0" }
 serde_yaml = { version = "0.9.34-deprecated" }
 oas3 = { version = "0.19" }
-anyhow = "1.0.99"
 serde = { version = "1.0" }
 quote = { version = "1.0" }
-syn = { version = "2.0" }
+syn = { version = "2", default-features = false, features = ["full", "parsing"] }
 log = { version = "0.4" }
 indoc = { version = "2" }
 thiserror = { version = "2.0" }
@@ -26,6 +25,7 @@ insta = { version = "1.43" }
 darling = { version = "0.21" }
 brunch = { version = "0.11" }
 convert_case = { version = "0.8.0" }
+clap = { version = "4" }
 
 [profile.dev.package]
 insta.opt-level = 3

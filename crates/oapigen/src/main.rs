@@ -1,68 +1,68 @@
-use serde::{de, Deserialize, Deserializer, Serialize, Serializer};
+use std::path::PathBuf;
 
-#[derive(Debug)]
-struct ApiVersionV2;
+use clap::{Parser, Subcommand};
 
-impl Serialize for ApiVersionV2 {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str("v2")
-    }
+#[derive(Parser)]
+#[command(version, about, long_about = None)]
+struct Cli {
+    /// Optional name to operate on
+    name: Option<String>,
+
+    /// Sets a custom config file
+    #[arg(short, long, value_name = "FILE")]
+    config: Option<PathBuf>,
+
+    /// Turn debugging information on
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    debug: u8,
+
+    #[command(subcommand)]
+    command: Option<Commands>,
 }
 
-impl<'de> Deserialize<'de> for ApiVersionV2 {
-    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let incoming = String::deserialize(deserializer)?;
-
-        // The core validation logic
-        if incoming == "v2" {
-            Ok(ApiVersionV2)
-        } else {
-            Err(de::Error::custom(format!(
-                "expected string \"v2\", found \"{}\"",
-                incoming
-            )))
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, Debug)]
-struct MyApiObject {
-    // This field is guaranteed to be "v2" if deserialization succeeds.
-    // It adds no size to the struct at runtime.
-    pub api_version: ApiVersionV2,
-    pub data: String,
+#[derive(Subcommand)]
+enum Commands {
+    /// does testing things
+    Test {
+        /// lists test values
+        #[arg(short, long)]
+        list: bool,
+    },
 }
 
 fn main() {
-    // --- Serialization ---
-    let my_object = MyApiObject {
-        api_version: ApiVersionV2, // The only possible value
-        data: "some important data".to_string(),
-    };
+    let cli = Cli::parse();
 
-    let json_output = serde_json::to_string_pretty(&my_object).unwrap();
-    println!("Serialized JSON:\n{}", json_output);
-    // Output will be:
-    // {
-    //   "api_version": "v2",
-    //   "data": "some important data"
-    // }
+    // You can check the value provided by positional arguments, or option arguments
+    if let Some(name) = cli.name.as_deref() {
+        println!("Value for name: {name}");
+    }
 
-    // --- Deserialization (Success) ---
-    let valid_json_input = r#"{ "api_version": "v2", "data": "payload" }"#;
-    let deserialized_ok: MyApiObject = serde_json::from_str(valid_json_input).unwrap();
-    println!("\nSuccessfully deserialized: {:?}", deserialized_ok);
+    if let Some(config_path) = cli.config.as_deref() {
+        println!("Value for config: {}", config_path.display());
+    }
 
-    // --- Deserialization (Failure) ---
-    let invalid_json_input = r#"{ "api_version": "v1", "data": "old payload" }"#;
-    let deserialized_err = serde_json::from_str::<MyApiObject>(invalid_json_input);
-    println!("\nFailed to deserialize: {:?}", deserialized_err);
-    // Output will be:
-    // Err(Error("expected string \"v2\", found \"v1\"", line: 1, column: 22))
+    // You can see how many times a particular flag or argument occurred
+    // Note, only flags can have multiple occurrences
+    match cli.debug {
+        0 => println!("Debug mode is off"),
+        1 => println!("Debug mode is kind of on"),
+        2 => println!("Debug mode is on"),
+        _ => println!("Don't be crazy"),
+    }
+
+    // You can check for the existence of subcommands, and if found use their
+    // matches just as you would the top level cmd
+    match &cli.command {
+        Some(Commands::Test { list }) => {
+            if *list {
+                println!("Printing testing lists...");
+            } else {
+                println!("Not printing testing lists...");
+            }
+        }
+        None => {}
+    }
+
+    // Continued program logic goes here...
 }

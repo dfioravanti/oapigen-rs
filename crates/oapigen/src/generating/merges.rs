@@ -86,7 +86,7 @@ mod tests {
         let want = quote! {
             use chrono;
 
-            type user_time = chrono::DateTime<chrono::Utc>;
+            struct user_time (chrono::DateTime<chrono::Utc>);
         };
         assert_eq!(want.to_string(), got.to_string());
     }

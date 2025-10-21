@@ -1,14 +1,18 @@
+use crate::models;
 use crate::models::schema;
 use crate::parsing::errors::ParsingError;
 use crate::parsing::routes::parse_routes;
 use oas3::spec;
 
-pub fn parse_specs(spec: oas3::Spec) -> Result<Vec<schema::SchemaAsRust>, ParsingError> {
+pub fn parse_specs(
+    config: &models::Config,
+    spec: oas3::Spec,
+) -> Result<Vec<schema::SchemaAsRust>, ParsingError> {
     let mut parsed_schemas = Vec::new();
 
     let components = spec.clone().components;
     if let Some(components) = components {
-        let parsed_schemas_from_routes = parse_routes(&spec)?;
+        let parsed_schemas_from_routes = parse_routes(config, &spec)?;
         parsed_schemas.extend(parsed_schemas_from_routes);
 
         for (schema_name, schema) in components.schemas {
@@ -33,6 +37,8 @@ pub fn parse_specs(spec: oas3::Spec) -> Result<Vec<schema::SchemaAsRust>, Parsin
 
 #[cfg(test)]
 mod tests {
+    use crate::models;
+    use crate::models::{DateTimeLibraries, Libraries};
     use crate::parsing::specs::parse_specs;
     use rstest::rstest;
 
@@ -42,10 +48,17 @@ mod tests {
         let mut settings = insta::Settings::clone_current();
         settings.set_snapshot_suffix(name);
 
+        let config = models::Config {
+            output_path: Default::default(),
+            libraries: Libraries {
+                datetime: DateTimeLibraries::Chrono,
+            },
+        };
+
         let yaml = std::fs::read_to_string(path).unwrap();
         let spec = oas3::from_yaml(yaml).unwrap();
 
-        let got = parse_specs(spec).unwrap();
+        let got = parse_specs(&config, spec).unwrap();
         let got_as_strings = got.iter().map(|v| v.to_string()).collect::<Vec<_>>();
         settings.bind(|| {
             insta::assert_yaml_snapshot!(got_as_strings);

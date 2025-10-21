@@ -1,8 +1,7 @@
 mod constants;
-mod errors;
+pub mod errors;
 mod fixtures;
 mod routes;
-mod schema_format;
 mod schemas;
 pub mod specs;
 mod typeset;

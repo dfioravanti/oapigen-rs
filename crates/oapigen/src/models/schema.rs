@@ -74,10 +74,6 @@ impl ToTokens for SchemaAsRust {
         };
 
         tokens.clone_from(&generated_tokens);
-
-        let a = tokens.to_string();
-        let _ = a;
-        print!("{:}", a);
     }
 }
 
@@ -85,7 +81,7 @@ fn tokenize_type(tokenized_schema: &SchemaAsRust) -> TokenStream {
     let tokenized_name = &tokenized_schema.tokenized_name;
     let tokenized_type = &tokenized_schema.tokenized_type;
 
-    quote! { type #tokenized_name = #tokenized_type; }
+    quote! { struct #tokenized_name(#tokenized_type); }
 }
 
 #[cfg(test)]
