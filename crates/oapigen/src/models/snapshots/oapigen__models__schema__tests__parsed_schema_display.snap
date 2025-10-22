@@ -2,4 +2,7 @@
 source: crates/oapigen/src/models/schema.rs
 expression: formatted_parsed_schema
 ---
-"use chrono :: DateTime ; \n struct time (DateTime) ;"
+use chrono::DateTime;
+///My favourite comment
+#[derive(Serialize, Deserialize, Debug)]
+struct time(DateTime);

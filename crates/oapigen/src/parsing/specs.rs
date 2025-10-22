@@ -61,7 +61,7 @@ mod tests {
         let got = parse_specs(&config, spec).unwrap();
         let got_as_strings = got.iter().map(|v| v.to_string()).collect::<Vec<_>>();
         settings.bind(|| {
-            insta::assert_yaml_snapshot!(got_as_strings);
+            insta::assert_snapshot!(got_as_strings.join("\n"));
         });
     }
 }

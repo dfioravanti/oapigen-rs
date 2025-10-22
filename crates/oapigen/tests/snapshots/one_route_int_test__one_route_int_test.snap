@@ -2,4 +2,6 @@
 source: crates/oapigen/tests/one_route_int_test.rs
 expression: got.to_string()
 ---
+use serde::{Deserialize, Serialize};
+#[derive(Debug, Deserialize, Serialize)]
 struct ListAllWidgetsResponse200(i32);

@@ -7,17 +7,18 @@ tags:
 paths:
   /date:
     get:
-      operationId: Date_date
-      description: List widgets
-      parameters: []
+      operationId: GetDate
+      description: Get the current date
+      parameters: [ ]
       responses:
         '200':
           description: The request has succeeded.
           content:
             text/plain:
               schema:
+                description: The requested date
                 type: string
                 format: date-time
       tags:
         - date
-components: {}
+components: { }

@@ -27,8 +27,12 @@ pub struct SchemaAsRust {
     pub tokenized_name: TokenStream,
     /// The type represented as a TokenStream
     pub tokenized_type: TokenStream,
+    /// The macros that will be applied to this type as a TokenStream
+    pub tokenized_macros: TokenStream,
     /// The imports needed to make the type compile.
     pub imports: Imports,
+    /// The optional comment to the schema
+    pub comment: Option<String>,
 
     pub current_type: CurrentType,
 }
@@ -55,11 +59,19 @@ impl fmt::Display for SchemaAsRust {
                 acc
             });
 
-        if imports.is_empty() {
-            write!(f, "{}", self.to_token_stream())
+        let output = if imports.is_empty() {
+            format!("{}", self.to_token_stream())
         } else {
-            write!(f, "{} \n {}", imports, self.to_token_stream())
-        }
+            format!("{} \n {}", imports, self.to_token_stream())
+        };
+
+        let b = match syn::parse_file(&output.to_string()) {
+            Ok(b) => b,
+            Err(e) => panic!("{}", e),
+        };
+        let formatted = prettyplease::unparse(&b);
+
+        write!(f, "{}", formatted)
     }
 }
 
@@ -80,15 +92,26 @@ impl ToTokens for SchemaAsRust {
 fn tokenize_type(tokenized_schema: &SchemaAsRust) -> TokenStream {
     let tokenized_name = &tokenized_schema.tokenized_name;
     let tokenized_type = &tokenized_schema.tokenized_type;
+    let tokenized_macros = &tokenized_schema.tokenized_macros;
+    let tokenized_comment = match &tokenized_schema.comment {
+        None => TokenStream::new(),
+        Some(c) => {
+            quote! { #[doc = #c] }
+        }
+    };
 
-    quote! { struct #tokenized_name(#tokenized_type); }
+    quote! {
+        #tokenized_comment
+        #tokenized_macros
+        struct #tokenized_name(#tokenized_type);
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    use insta::assert_yaml_snapshot;
+    use insta::assert_snapshot;
 
     #[test]
     fn test_parsed_schema_display() {
@@ -105,12 +128,14 @@ mod tests {
         let parsed_schema = SchemaAsRust {
             tokenized_name: quote! { time },
             tokenized_type: tokenized_schema,
+            tokenized_macros: quote! { #[derive(Serialize, Deserialize, Debug)] },
             imports,
+            comment: Some("My favourite comment".to_string()),
             current_type: CurrentType::Type,
         };
 
         let formatted_parsed_schema = format!("{}", parsed_schema);
 
-        assert_yaml_snapshot!(formatted_parsed_schema);
+        assert_snapshot!(formatted_parsed_schema);
     }
 }

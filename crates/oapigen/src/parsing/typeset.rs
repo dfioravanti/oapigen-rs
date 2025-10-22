@@ -1,4 +1,5 @@
 use crate::parsing::errors::ParsingError;
+use crate::parsing::macros::get_macros;
 use crate::{format, models};
 use oas3::spec::{ObjectSchema, SchemaType, SchemaTypeSet};
 use proc_macro2::TokenStream;
@@ -48,15 +49,21 @@ fn tokenize_integer_schema(
     // which we do not want. Doing it like this drops the ""
     let tokenized_name: TokenStream = schema_name.parse()?;
 
-    let (tokenized_type, imports) = match &schema.format {
+    let (tokenized_type, mut imports) = match &schema.format {
         Some(format) => format::format_number(format),
         None => format::format_number(format::DEFAULT_INTEGER),
     };
 
+    let (tokenized_macros, imports_macros) = get_macros();
+
+    imports.extend(imports_macros);
+
     Ok(models::SchemaAsRust {
         tokenized_name,
         tokenized_type,
+        tokenized_macros,
         imports,
+        comment: schema.description.clone(),
         current_type: models::CurrentType::Type,
     })
 }
@@ -69,15 +76,21 @@ fn tokenize_number_schema(
     // which we do not want. Doing it like this drops the ""
     let tokenized_name: TokenStream = schema_name.parse()?;
 
-    let (tokenized_type, imports) = match &schema.format {
+    let (tokenized_type, mut imports) = match &schema.format {
         Some(format) => format::format_number(format),
         None => format::format_number(format::DEFAULT_NUMBER),
     };
 
+    let (tokenized_macros, imports_macros) = get_macros();
+
+    imports.extend(imports_macros);
+
     Ok(models::SchemaAsRust {
         tokenized_name,
         tokenized_type,
+        tokenized_macros,
         imports,
+        comment: schema.description.clone(),
         current_type: models::CurrentType::Type,
     })
 }
@@ -91,15 +104,21 @@ fn tokenize_string_schema(
     // which we do not want. Doing it like this drops the ""
     let tokenized_name: TokenStream = schema_name.parse()?;
 
-    let (tokenized_type, imports) = match &schema.format {
+    let (tokenized_type, mut imports) = match &schema.format {
         Some(format) => format::format_string(config, format),
         None => format::format_string(config, format::DEFAULT_STRING),
     };
 
+    let (tokenized_macros, imports_macros) = get_macros();
+
+    imports.extend(imports_macros);
+
     Ok(models::SchemaAsRust {
         tokenized_name,
         tokenized_type,
+        tokenized_macros,
         imports,
+        comment: schema.description.clone(),
         current_type: models::CurrentType::Type,
     })
 }
@@ -112,7 +131,7 @@ mod tests {
     use rstest::rstest;
 
     #[rstest]
-    #[case("integer", "Age", "type: integer")]
+    #[case("integer", "Age", "{type: integer, description: The requested date}")]
     #[case("number", "Height", "type: number")]
     #[case("string", "Name", "type: string")]
     fn test_parse_base_cases(
@@ -135,7 +154,7 @@ mod tests {
         let got = tokenize_schema(&config, schema_name.to_string(), schema).unwrap();
 
         insta_settings.bind(|| {
-            insta::assert_yaml_snapshot!(got.to_string());
+            insta::assert_snapshot!(got.to_string());
         });
     }
 

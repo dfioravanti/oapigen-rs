@@ -77,17 +77,15 @@ mod tests {
         let schema1 = schema::SchemaAsRust {
             tokenized_name: quote! { user_time },
             tokenized_type: quote! { chrono::DateTime<chrono::Utc> },
+            tokenized_macros: quote! { #[derive(Serialize, Deserialize, Debug)] },
+            comment: None,
             imports: imports_1,
             current_type: CurrentType::Type,
         };
 
         let schemas = vec![schema1];
         let got = merge_schemas(schemas);
-        let want = quote! {
-            use chrono;
 
-            struct user_time (chrono::DateTime<chrono::Utc>);
-        };
-        assert_eq!(want.to_string(), got.to_string());
+        insta::assert_snapshot!(got.to_string());
     }
 }

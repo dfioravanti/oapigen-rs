@@ -1,0 +1,5 @@
+---
+source: crates/oapigen/src/generating/merges.rs
+expression: got.to_string()
+---
+use chrono ; # [derive (Serialize , Deserialize , Debug)] struct user_time (chrono :: DateTime < chrono :: Utc >) ;

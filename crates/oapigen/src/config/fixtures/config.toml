@@ -1,0 +1,8 @@
+title = "test configuration"
+
+[[macros]]
+import = "clap::Parser"
+macro = """
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+"""
