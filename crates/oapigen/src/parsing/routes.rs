@@ -1,7 +1,7 @@
 use crate::models;
 use crate::models::schema;
 use crate::parsing::errors::ParsingError;
-use crate::parsing::typeset::tokenize_schema;
+use crate::parsing::typeset::schema_to_rust;
 use convert_case::{Case, Casing};
 use oas3::spec;
 use std::option::Option;
@@ -46,14 +46,13 @@ fn parse_operation(
         let responses = &operation.responses;
         if let Some(responses) = responses {
             for (response_name, response) in responses {
+                let schema_inputs = models::OperationSchemaInputs {
+                    operation_name: &operation_name,
+                    response_name: &response_name,
+                };
+
                 let resolved_response = response.resolve(spec)?;
-                let parsed = parse_response(
-                    config,
-                    spec,
-                    &operation_name,
-                    &response_name,
-                    &resolved_response,
-                )?;
+                let parsed = respose_to_rust(config, spec, &schema_inputs, &resolved_response)?;
                 output.extend(parsed);
             }
         }
@@ -61,16 +60,15 @@ fn parse_operation(
     Ok(output)
 }
 
-fn parse_response(
+fn respose_to_rust(
     config: &models::Config,
     spec: &oas3::Spec,
-    operation_name: &String,
-    response_name: &String,
+    schema_inputs: &models::OperationSchemaInputs,
     response: &spec::Response,
 ) -> Result<Vec<schema::SchemaAsRust>, ParsingError> {
     let mut v = Vec::with_capacity(response.content.len());
     for (mediatype_name, mediatype) in &response.content {
-        let parsed = parse_mediatype(config, spec, operation_name, response_name, mediatype)?;
+        let parsed = mediatype_to_rust(config, spec, schema_inputs, mediatype)?;
         match parsed {
             Some(tokenized_schema) => v.push(tokenized_schema),
             None => {}
@@ -80,24 +78,31 @@ fn parse_response(
     Ok(v)
 }
 
-fn parse_mediatype(
+fn mediatype_to_rust(
     config: &models::Config,
     spec: &oas3::Spec,
-    operation_name: &String,
-    response_name: &String,
+    operation_schema_inputs: &models::OperationSchemaInputs,
     media_type: &spec::MediaType,
 ) -> Result<Option<schema::SchemaAsRust>, ParsingError> {
     let schema_name = [
-        operation_name.to_case(Case::UpperCamel),
+        operation_schema_inputs
+            .operation_name
+            .to_case(Case::UpperCamel),
         "Response".to_string(),
-        response_name.to_case(Case::UpperCamel),
+        operation_schema_inputs
+            .response_name
+            .to_case(Case::UpperCamel),
     ]
     .join("");
+
+    let schema_inputs = models::SchemaInputs {
+        schema_name: &schema_name,
+    };
 
     let schema = &media_type.schema;
     if let Some(schema) = schema {
         let parsed_schema = schema.resolve(spec)?;
-        let tokens = tokenize_schema(config, schema_name, parsed_schema)?;
+        let tokens = schema_to_rust(config, &schema_inputs, parsed_schema)?;
 
         return Ok(Some(tokens));
     }

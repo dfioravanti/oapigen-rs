@@ -1,8 +1,8 @@
 ---
 source: crates/oapigen/src/parsing/specs.rs
+assertion_line: 64
 expression: "got_as_strings.join(\"\\n\")"
 ---
 use serde::{Deserialize, Serialize};
-///Get integer
 #[derive(Debug, Deserialize, Serialize)]
 struct GetAllIntegersResponse200(i32);

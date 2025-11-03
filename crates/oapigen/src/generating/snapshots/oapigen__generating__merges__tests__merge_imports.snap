@@ -1,0 +1,6 @@
+---
+source: crates/oapigen/src/generating/merges.rs
+expression: got.to_string()
+---
+use chrono::DateTime;
+use crate::generating::errors::GeneratingError;

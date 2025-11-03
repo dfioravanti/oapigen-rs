@@ -1,7 +1,9 @@
 ---
 source: crates/oapigen/src/parsing/typeset.rs
+assertion_line: 196
 expression: got.to_string()
 ---
 use serde::{Deserialize, Serialize};
+///The requested date
 #[derive(Debug, Deserialize, Serialize)]
 struct Age(i32);

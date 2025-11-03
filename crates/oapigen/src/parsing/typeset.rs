@@ -1,112 +1,96 @@
 use crate::parsing::errors::ParsingError;
+use crate::parsing::errors::ParsingError::CannotGenerateUnionType;
 use crate::parsing::macros::get_macros;
-use crate::{format, models};
+use crate::{format, models, Imports};
 use oas3::spec::{ObjectSchema, SchemaType, SchemaTypeSet};
-use proc_macro2::TokenStream;
+use std::collections::HashSet;
 
-pub(crate) fn tokenize_schema(
+enum BaseType {
+    Boolean,
+    Integer,
+    Number,
+    String,
+    Null,
+}
+
+pub(crate) fn schema_to_rust(
     config: &models::Config,
-    schema_name: String,
+    inputs: &models::SchemaInputs,
     schema: ObjectSchema,
 ) -> Result<models::SchemaAsRust, ParsingError> {
     if schema.const_value.is_some() {}
 
-    let tokenized_schema = match &schema.schema_type {
+    match &schema.schema_type {
         Some(schema_typeset) => match schema_typeset {
-            SchemaTypeSet::Single(schema_type) => {
-                tokenize_type(config, schema_name, &schema, schema_type)
+            SchemaTypeSet::Single(single_type) => {
+                convert_single_type(config, inputs, &schema, single_type)
             }
-            SchemaTypeSet::Multiple(_items) => todo!(),
+            SchemaTypeSet::Multiple(multiple_types) => {
+                convert_multiple_types(config, inputs, &schema, multiple_types)
+            }
         },
         None => todo!(),
-    };
-
-    tokenized_schema
+    }
 }
 
-fn tokenize_type(
+fn convert_multiple_types(
     config: &models::Config,
-    schema_name: String,
+    inputs: &models::SchemaInputs,
+    schema: &ObjectSchema,
+    schema_types: &Vec<SchemaType>,
+) -> Result<models::SchemaAsRust, ParsingError> {
+    let mut rust_types: Vec<models::SchemaAsRust> = Vec::with_capacity(schema_types.len());
+    for schema_type in schema_types {
+        let o = convert_single_type(config, inputs, schema, schema_type)?;
+        rust_types.push(o);
+    }
+
+    union_type(&rust_types)
+}
+
+fn convert_single_type(
+    config: &models::Config,
+    inputs: &models::SchemaInputs,
     schema: &ObjectSchema,
     schema_type: &SchemaType,
 ) -> Result<models::SchemaAsRust, ParsingError> {
     match schema_type {
-        SchemaType::Boolean => todo!(),
-        SchemaType::Integer => tokenize_integer_schema(schema_name, schema),
-        SchemaType::Number => tokenize_number_schema(schema_name, schema),
-        SchemaType::String => tokenize_string_schema(config, schema_name, schema),
+        SchemaType::Null => convert_base_schema_type(config, inputs, BaseType::Null, schema),
+        SchemaType::Boolean => convert_base_schema_type(config, inputs, BaseType::Boolean, schema),
+        SchemaType::Integer => convert_base_schema_type(config, inputs, BaseType::Integer, schema),
+        SchemaType::Number => convert_base_schema_type(config, inputs, BaseType::Number, schema),
+        SchemaType::String => convert_base_schema_type(config, inputs, BaseType::String, schema),
         SchemaType::Array => todo!(),
         SchemaType::Object => todo!(),
-        SchemaType::Null => todo!(),
     }
 }
 
-fn tokenize_integer_schema(
-    schema_name: String,
-    schema: &ObjectSchema,
-) -> Result<models::SchemaAsRust, ParsingError> {
-    // if one injects schema_name directly into quote it gets tokenized together with "",
-    // which we do not want. Doing it like this drops the ""
-    let tokenized_name: TokenStream = schema_name.parse()?;
-
-    let (tokenized_type, mut imports) = match &schema.format {
-        Some(format) => format::format_number(format),
-        None => format::format_number(format::DEFAULT_INTEGER),
-    };
-
-    let (tokenized_macros, imports_macros) = get_macros();
-
-    imports.extend(imports_macros);
-
-    Ok(models::SchemaAsRust {
-        tokenized_name,
-        tokenized_type,
-        tokenized_macros,
-        imports,
-        comment: schema.description.clone(),
-        current_type: models::CurrentType::Type,
-    })
-}
-
-fn tokenize_number_schema(
-    schema_name: String,
-    schema: &ObjectSchema,
-) -> Result<models::SchemaAsRust, ParsingError> {
-    // if one injects schema_name directly into quote it gets tokenized together with "",
-    // which we do not want. Doing it like this drops the ""
-    let tokenized_name: TokenStream = schema_name.parse()?;
-
-    let (tokenized_type, mut imports) = match &schema.format {
-        Some(format) => format::format_number(format),
-        None => format::format_number(format::DEFAULT_NUMBER),
-    };
-
-    let (tokenized_macros, imports_macros) = get_macros();
-
-    imports.extend(imports_macros);
-
-    Ok(models::SchemaAsRust {
-        tokenized_name,
-        tokenized_type,
-        tokenized_macros,
-        imports,
-        comment: schema.description.clone(),
-        current_type: models::CurrentType::Type,
-    })
-}
-
-fn tokenize_string_schema(
+fn convert_base_schema_type(
     config: &models::Config,
-    schema_name: String,
+    inputs: &models::SchemaInputs,
+    schema_type: BaseType,
     schema: &ObjectSchema,
 ) -> Result<models::SchemaAsRust, ParsingError> {
-    // if one injects schema_name directly into quote it gets tokenized together with "",
-    // which we do not want. Doing it like this drops the ""
-    let tokenized_name: TokenStream = schema_name.parse()?;
+    let is_optional = match schema_type {
+        BaseType::Null => true,
+        _ => false,
+    };
 
-    let (tokenized_type, mut imports) = match &schema.format {
-        Some(format) => format::format_string(config, format),
-        None => format::format_string(config, format::DEFAULT_STRING),
+    let (rust_type, mut imports) = match schema_type {
+        BaseType::Integer => match &schema.format {
+            Some(format) => format::format_number(format),
+            None => format::format_number(format::DEFAULT_INTEGER),
+        },
+        BaseType::Number => match &schema.format {
+            Some(format) => format::format_number(format),
+            None => format::format_number(format::DEFAULT_NUMBER),
+        },
+        BaseType::String => match &schema.format {
+            Some(format) => format::format_string(config, format),
+            None => format::format_string(config, format::DEFAULT_STRING),
+        },
+        BaseType::Boolean => format::format_boolean(),
+        BaseType::Null => format::format_null(),
     };
 
     let (tokenized_macros, imports_macros) = get_macros();
@@ -114,11 +98,62 @@ fn tokenize_string_schema(
     imports.extend(imports_macros);
 
     Ok(models::SchemaAsRust {
-        tokenized_name,
-        tokenized_type,
-        tokenized_macros,
+        name: inputs.schema_name.clone(),
+        rust_type,
+        macros: tokenized_macros,
         imports,
         comment: schema.description.clone(),
+        is_optional,
+        current_type: models::CurrentType::Type,
+    })
+}
+
+fn union_type(types: &Vec<models::SchemaAsRust>) -> Result<models::SchemaAsRust, ParsingError> {
+    if types.is_empty() {
+        return Err(CannotGenerateUnionType("empty list of types".to_string()));
+    }
+
+    let mut name = String::new();
+    let mut rust_types: Vec<String> = Vec::new();
+    let mut macros: HashSet<String> = HashSet::new();
+    let mut imports = Imports::new();
+    let mut is_optional = false;
+    let mut comment: Option<String> = None;
+
+    for t in types {
+        if name != "" && name != t.name {
+            return Err(CannotGenerateUnionType(format!(
+                "all elements of a union type are expected to have the same name, but I got {:} and {:}",
+                name, t.name
+            )));
+        }
+        if comment.is_some() && comment != Some("".to_string()) && comment != t.comment {
+            return Err(CannotGenerateUnionType(format!(
+                "all elements of a union type are expected to have the same name, but I got {:} and {:}",
+                name, t.name
+            )));
+        }
+
+        // todo: think to remove these clones since only the first one is needed
+        name = t.name.clone();
+        comment = t.comment.clone();
+        if t.is_optional {
+            is_optional = true;
+        } else {
+            rust_types.push(t.rust_type.clone());
+        }
+
+        macros.extend(t.macros.clone());
+        imports.extend(t.imports.clone());
+    }
+
+    Ok(models::SchemaAsRust {
+        name,
+        rust_type: rust_types.join("|"),
+        macros,
+        imports,
+        comment,
+        is_optional,
         current_type: models::CurrentType::Type,
     })
 }
@@ -134,6 +169,7 @@ mod tests {
     #[case("integer", "Age", "{type: integer, description: The requested date}")]
     #[case("number", "Height", "type: number")]
     #[case("string", "Name", "type: string")]
+    #[case("boolean", "True", "type: boolean")]
     fn test_parse_base_cases(
         #[case] name: &str,
         #[case] schema_name: &str,
@@ -151,7 +187,10 @@ mod tests {
 
         let schema = serde_yaml::from_str::<ObjectSchema>(schema_spec).unwrap();
 
-        let got = tokenize_schema(&config, schema_name.to_string(), schema).unwrap();
+        let inputs = models::SchemaInputs {
+            schema_name: &schema_name.to_string(),
+        };
+        let got = schema_to_rust(&config, &inputs, schema).unwrap();
 
         insta_settings.bind(|| {
             insta::assert_snapshot!(got.to_string());

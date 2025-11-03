@@ -1,14 +1,14 @@
 openapi: 3.1.0
 info:
-  title: Widget Service
+  title: Test Service
   version: 0.0.0
 tags:
-  - name: Widgets
+  - name: number
 paths:
-  /widgets:
+  /three:
     get:
-      operationId: GetAllIntegers
-      description: Get integer
+      operationId: GetThree
+      description: Get the current date
       parameters: []
       responses:
         '200':
@@ -16,8 +16,9 @@ paths:
           content:
             text/plain:
               schema:
-                type: integer
-                format: int32
+                type: number
+                enum:
+                  - 3
       tags:
-        - Widgets
+        - number
 components: {}

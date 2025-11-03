@@ -1,0 +1,10 @@
+---
+source: crates/oapigen/tests/one_route_date_test.rs
+assertion_line: 19
+expression: got.to_string()
+---
+use jiff::Timestamp;
+use serde::{Deserialize, Serialize};
+///Get the current date
+#[derive(Debug, Deserialize, Serialize)]
+struct GetDateResponse200(Timestamp);

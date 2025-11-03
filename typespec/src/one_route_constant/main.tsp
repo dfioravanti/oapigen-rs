@@ -10,11 +10,11 @@ using Http;
 @service(#{ title: "Test Service" })
 namespace DemoService;
 
-@route("/date")
-@tag("date")
-interface Date {
+@route("/three")
+@tag("number")
+interface Number {
   /** Get the current date */
-  @operationId("GetDate")
+  @operationId("GetThree")
   @get
-  date(): utcDateTime;
+  three(): 3;
 }

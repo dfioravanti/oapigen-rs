@@ -1,21 +1,24 @@
 use proc_macro2::TokenStream;
 use quote::{quote, ToTokens};
 use std::hash::Hash;
-use std::{collections::HashMap, fmt};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt,
+};
 
 /// Collects all the imports that were already added to the code.
 /// It is used to determine if an import should be added or not.
 /// For example assume that two different structs need
 /// chrono::DateTime then we add "chrono::DateTime" to the Imports
-/// for the first struct that we hit and we will not add it in the second case since we already have it.
-pub type Imports = HashMap<String, TokenStream>;
+/// for the first struct that we hit, and we will not add it in the second case since we already have it.
+pub type Imports = HashMap<String, String>;
 
 #[derive(Debug)]
 pub enum CurrentType {
     Type,
     Const,
     Enum,
-    Vec,
+    Vector,
     Struct,
 }
 
@@ -24,15 +27,17 @@ pub enum CurrentType {
 #[derive(Debug)]
 pub struct SchemaAsRust {
     /// The name of the field as a TokenStream
-    pub tokenized_name: TokenStream,
-    /// The type represented as a TokenStream
-    pub tokenized_type: TokenStream,
+    pub name: String,
+    /// The type that the struct uses
+    pub rust_type: String,
     /// The macros that will be applied to this type as a TokenStream
-    pub tokenized_macros: TokenStream,
+    pub macros: HashSet<String>,
     /// The imports needed to make the type compile.
     pub imports: Imports,
     /// The optional comment to the schema
     pub comment: Option<String>,
+    /// Is the type optional?
+    pub is_optional: bool,
 
     pub current_type: CurrentType,
 }
@@ -53,11 +58,10 @@ impl fmt::Display for SchemaAsRust {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let imports = self
             .imports
-            .iter()
-            .fold(TokenStream::new(), |mut acc, (_, v)| {
-                acc.extend(v.clone());
-                acc
-            });
+            .values()
+            .map(ToString::to_string)
+            .collect::<Vec<_>>()
+            .join("\n");
 
         let output = if imports.is_empty() {
             format!("{}", self.to_token_stream())
@@ -81,7 +85,7 @@ impl ToTokens for SchemaAsRust {
             CurrentType::Type => tokenize_type(self),
             CurrentType::Const => todo!(),
             CurrentType::Enum => todo!(),
-            CurrentType::Vec => todo!(),
+            CurrentType::Vector => todo!(),
             CurrentType::Struct => todo!(),
         };
 
@@ -89,11 +93,28 @@ impl ToTokens for SchemaAsRust {
     }
 }
 
-fn tokenize_type(tokenized_schema: &SchemaAsRust) -> TokenStream {
-    let tokenized_name = &tokenized_schema.tokenized_name;
-    let tokenized_type = &tokenized_schema.tokenized_type;
-    let tokenized_macros = &tokenized_schema.tokenized_macros;
-    let tokenized_comment = match &tokenized_schema.comment {
+fn tokenize_type(rust_schema: &SchemaAsRust) -> TokenStream {
+    let tokenized_name = match &rust_schema.name.parse::<TokenStream>() {
+        Ok(v) => v.clone(),
+        Err(e) => panic!("{}", format!("cannot turn name to tokens: {}", e)),
+    };
+    let tokenized_type = match &rust_schema.rust_type.parse::<TokenStream>() {
+        Ok(v) => v.clone(),
+        Err(e) => panic!("{}", format!("cannot turn rust type to tokens: {}", e)),
+    };
+    // TODO: rewrite this as something readable, it is just chaining the macros with \n
+    let tokenized_macros = match &rust_schema
+        .macros
+        .clone()
+        .into_iter()
+        .collect::<Vec<_>>()
+        .join("\n")
+        .parse::<TokenStream>()
+    {
+        Ok(v) => v.clone(),
+        Err(e) => panic!("{}", format!("cannot turn macros to tokens: {}", e)),
+    };
+    let tokenized_comment = match &rust_schema.comment {
         None => TokenStream::new(),
         Some(c) => {
             quote! { #[doc = #c] }
@@ -110,27 +131,25 @@ fn tokenize_type(tokenized_schema: &SchemaAsRust) -> TokenStream {
 #[cfg(test)]
 mod tests {
     use super::*;
-
     use insta::assert_snapshot;
 
     #[test]
     fn test_parsed_schema_display() {
-        let tokenized_schema = quote! {
-            DateTime
-        };
+        let tokenized_schema = "DateTime".to_string();
 
         let mut imports = HashMap::new();
         imports.insert(
             "chrono::DateTime".to_string(),
-            quote! { use chrono::DateTime; },
+            " use chrono::DateTime;".to_string(),
         );
 
         let parsed_schema = SchemaAsRust {
-            tokenized_name: quote! { time },
-            tokenized_type: tokenized_schema,
-            tokenized_macros: quote! { #[derive(Serialize, Deserialize, Debug)] },
+            name: "time".to_string(),
+            rust_type: tokenized_schema,
+            macros: HashSet::from(["#[derive(Serialize, Deserialize, Debug)]".to_string()]),
             imports,
             comment: Some("My favourite comment".to_string()),
+            is_optional: false,
             current_type: CurrentType::Type,
         };
 

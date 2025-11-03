@@ -6,11 +6,11 @@ use crate::models;
 fn parse_constants(schema_name: String, schema: ObjectSchema) -> models::SchemaAsRust {
     match schema.const_value.unwrap() {
         Value::Null => todo!(),
-        Value::Bool(v) => todo!(),
-        Value::Number(v) => todo!(),
-        Value::String(v) => todo!(),
-        Value::Array(values) => todo!(),
-        Value::Object(field_to_value) => todo!(),
+        Value::Bool(_) => todo!(),
+        Value::Number(_) => todo!(),
+        Value::String(_) => todo!(),
+        Value::Array(_) => todo!(),
+        Value::Object(_) => todo!(),
     }
 }
 

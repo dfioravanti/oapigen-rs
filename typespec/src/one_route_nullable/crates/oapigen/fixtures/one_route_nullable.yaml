@@ -2,22 +2,18 @@ openapi: 3.1.0
 info:
   title: Test Service
   version: 0.0.0
-tags:
-  - name: date
+tags: []
 paths:
-  /date:
+  /nullable:
     get:
-      operationId: GetDate
+      operationId: GetNullable
       description: Get the current date
       parameters: []
       responses:
-        '200':
+        "200":
           description: The request has succeeded.
           content:
-            text/plain:
+            application/json:
               schema:
-                type: string
-                format: date-time
-      tags:
-        - date
+                type: [string, null]
 components: {}

@@ -4,4 +4,4 @@ expression: got.to_string()
 ---
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Deserialize, Serialize)]
-struct Age(i32);
+struct True(bool);

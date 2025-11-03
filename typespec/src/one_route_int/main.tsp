@@ -5,12 +5,16 @@ import "@typespec/openapi";
 import "../types.tsp";
 
 using Http;
+using OpenAPI;
+
 @service(#{ title: "Widget Service" })
 namespace DemoService;
 
 @route("/widgets")
 @tag("Widgets")
 interface Widgets {
-  /** List widgets */
-  @get object(): int32;
+  /** Get integer */
+  @operationId("GetAllIntegers")
+  @get
+  object(): int32;
 }
